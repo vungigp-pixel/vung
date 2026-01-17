@@ -38,9 +38,9 @@ def default_paths() -> tuple[str, str, str]:
             r"\\wsl.localhost\Ubuntu-22.04\home\dc\cpi\wintomseed\rename.xlsx",
         )
     return (
-        r"L:\KonTum_2021_2025",
-        r"\\wsl.localhost\Ubuntu-22.04\home\dc\cpi\wintomseed\TKT",
-        r"\\wsl.localhost\Ubuntu-22.04\home\dc\cpi\wintomseed\rename.xlsx",
+        r"/mnt/l/KonTum_2021_2025",
+        r"/home/dc/cpi/wintomseed/TKT",
+        r"/home/dc/cpi/wintomseed/rename.xlsx",
     )
 
 
@@ -102,6 +102,19 @@ def iter_source_files(source_root: Path):
                         yield level1_dir.name, day_dir.name, hour_dir.name, data_file
 
 
+def match_mapping(level1_name: str, mapping: dict[str, str]) -> str | None:
+    best_match = None
+    best_len = -1
+    for source_pattern, dest_name in mapping.items():
+        prefix = source_pattern.rstrip("*")
+        if not prefix:
+            continue
+        if level1_name.startswith(prefix) and len(prefix) > best_len:
+            best_match = dest_name
+            best_len = len(prefix)
+    return best_match
+
+
 def copy_files(
     source_root: Path,
     dest_root: Path,
@@ -111,7 +124,7 @@ def copy_files(
 ) -> int:
     copied_count = 0
     for level1_name, day_name, hour_name, data_file in iter_source_files(source_root):
-        mapped_level1 = mapping.get(level1_name)
+        mapped_level1 = match_mapping(level1_name, mapping)
         if not mapped_level1:
             print(f"WARN: No mapping for {level1_name}, skipping {data_file}")
             continue
